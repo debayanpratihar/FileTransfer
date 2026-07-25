@@ -1,0 +1,3 @@
+# AI Notebook
+
+This repository contains the product specification for an offline AI notebook Android application. The app is built with Kotlin, Jetpack Compose, Clean Architecture, MVVM, Room, Hilt, llama.cpp and ML Kit. Configuration is served from https://debayanpratihar.github.io/ai-notebook-config/ using config.json, models.json, announcements.json and changelog.json. AI models are downloaded from Hugging Face GGUF repositories and executed locally.
