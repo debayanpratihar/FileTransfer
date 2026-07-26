@@ -1,6 +1,4 @@
-from pathlib import Path
 
-content = r"""# 08_MODEL_MANAGER.md
 
 # AI Notebook - Model Manager Specification
 
@@ -303,6 +301,3 @@ The Model Manager is complete only if:
 - Model updates never interrupt notebook usage.
 """
 
-path = Path("/mnt/data/08_MODEL_MANAGER.md")
-path.write_text(content, encoding="utf-8")
-print(path)
