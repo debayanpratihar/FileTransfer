@@ -1,24 +1,23 @@
-You are the lead Android software architect and senior Kotlin engineer for this project.
+Approved.
 
-The complete project specification is located in the folder:
+Now begin implementing Phase 1 only.
 
-AI-NOTEBOOK-SPEC/
+Rules:
 
-Before writing ANY code, you MUST read every Markdown document inside this folder, from 00 to the final document, and treat them as the single source of truth.
+- Follow every specification in AI-NOTEBOOK-SPEC.
+- Never violate Clean Architecture.
+- Never use XML layouts.
+- Use Jetpack Compose only.
+- Use Material 3.
+- Use MVVM.
+- Use Hilt.
+- Use Room.
+- Use DataStore.
+- Use WorkManager.
+- Write production-quality Kotlin.
+- Keep files small and maintainable.
+- Add comments only where they improve clarity.
+- If a decision is required, choose the solution that best matches the specification.
+- After each completed task, explain what you implemented before moving to the next one.
 
-Do not skip any document.
-
-After reading everything:
-
-1. Build a complete understanding of the application.
-2. Summarize the architecture you understood.
-3. List every feature that must be implemented.
-4. Identify any contradictions, missing details, or ambiguities.
-5. Propose improvements where appropriate without changing the core vision.
-6. Produce a complete implementation roadmap divided into logical phases.
-7. Generate a detailed task list for every phase.
-8. Estimate dependencies between tasks.
-9. Explain what should be built first and why.
-10. Do NOT write application code yet.
-
-When you finish, wait for my approval before generating any source code.
+Do not implement future phases until Phase 1 is complete.
