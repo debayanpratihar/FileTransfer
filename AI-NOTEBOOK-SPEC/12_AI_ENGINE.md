@@ -1,6 +1,4 @@
-from pathlib import Path
 
-content = r"""# 07_AI_ENGINE.md
 
 # AI Notebook - Offline AI Engine Specification
 
@@ -282,7 +280,3 @@ The AI Engine is complete only if:
 - Users can interrupt generation at any time.
 - All generated handwriting remains editable.
 """
-
-path = Path("/mnt/data/07_AI_ENGINE.md")
-path.write_text(content, encoding="utf-8")
-print(path)
