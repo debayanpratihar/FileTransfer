@@ -1,6 +1,4 @@
-from pathlib import Path
 
-content = r"""# 06_HANDWRITING_ENGINE.md
 
 # AI Notebook - Handwriting Engine Specification
 
@@ -264,6 +262,3 @@ The handwriting engine is complete only if:
 - Handwriting remains editable after saving and reopening notebooks.
 """
 
-path = Path("/mnt/data/06_HANDWRITING_ENGINE.md")
-path.write_text(content, encoding="utf-8")
-print(path)
