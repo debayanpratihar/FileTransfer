@@ -1,6 +1,4 @@
-from pathlib import Path
 
-content = r"""# 03_UI_UX_SPEC.md
 
 # AI Notebook UI / UX Specification
 
@@ -257,7 +255,3 @@ The UI is complete only if:
 - AI never blocks user interaction.
 - The notebook remains the center of the experience.
 """
-
-path = Path("/mnt/data/03_UI_UX_SPEC.md")
-path.write_text(content, encoding="utf-8")
-print(path)
