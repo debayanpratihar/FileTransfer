@@ -1,6 +1,3 @@
-from pathlib import Path
-
-content = r"""# 05_DRAWING_ENGINE.md
 
 # AI Notebook - Drawing Engine Specification
 
@@ -306,7 +303,3 @@ The drawing engine is complete only if:
 - Zooming never reduces quality.
 - AI and user strokes share the same rendering pipeline.
 """
-
-path = Path("/mnt/data/05_DRAWING_ENGINE.md")
-path.write_text(content, encoding="utf-8")
-print(path)
