@@ -1,6 +1,3 @@
-from pathlib import Path
-
-md = r"""# 04_CANVAS_ENGINE.md
 
 # AI Notebook - Canvas Engine Specification
 
@@ -282,6 +279,3 @@ The canvas is complete only if:
 - Rendering remains smooth during drawing, zooming, and panning.
 """
 
-path = Path("/mnt/data/04_CANVAS_ENGINE.md")
-path.write_text(md, encoding="utf-8")
-print(path)
