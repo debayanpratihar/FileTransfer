@@ -20,4 +20,4 @@ Rules:
 - If a decision is required, choose the solution that best matches the specification.
 - After each completed task, explain what you implemented before moving to the next one.
 
-Do not implement future phases until Phase 1 is complete.
+Do not implement future phases until Phase 1 is complete..
