@@ -38,3 +38,145 @@ Subscribe if you want one good edit in your feed every day.
 
 
 ShortsApna, "anime edits", "anime edit", AMV, "anime AMV", "anime shorts", "anime edit shorts", "4k anime edits", "anime fight scenes", "anime velocity edit", "phonk anime edit", "anime status", "anime whatsapp status", "anime edits hindi", "Jujutsu Kaisen edit", "Demon Slayer edit", "One Piece edit", "Naruto edit", "Attack on Titan edit", "Solo Leveling edit", "Gojo edit", "Sukuna edit", "Zoro edit", "Levi edit", "anime edits india"
+
+
+
+
+GitHub Copilot Chat Assistant — use the prompt below with Claude. Replace placeholders (MODEL_PATH, <GROQ_KEY_1>, <GROQ_KEY_2>, PACKAGE_NAME, and any repo URL) before sending.
+
+Prompt for Claude
+You are an expert Android engineer and product designer. Produce a complete, production-ready Kotlin Android project (Jetpack Compose preferred) implementing a handwriting-first “smart notebook” that solves human-written problems. The output should be a full Git repo or zip containing source, Gradle configs, JNI/NDK build for native runtimes, clear README, tests, and instructions. Follow these strict requirements and constraints carefully.
+
+High-level product summary
+- App purpose: capture user handwriting (stylus or finger), recognize it, let the user correct it, solve the problem using a small local LLM for simple tasks and Groq Free API (two accounts/keys with failover) for heavyweight tasks, and return the answer rendered in the user’s own handwriting (or a typed fallback when a glyph is missing).
+- Target devices: must work well on low-end Android phones (4 GB RAM) and better on 6+ GB devices. Support arm64-v8a and armeabi-v7a.
+- Offline-first: allow capture, recognition (on-device), and small-model inference offline. Use cloud (Groq) only with explicit consent for heavy tasks.
+- Privacy: do not embed API keys in the repo; use Android Keystore for runtime storage. Include privacy policy file and Play Store checklist.
+
+Core functional requirements
+1) Handwriting capture & storage
+- Compose page editor with a performant custom canvas capturing raw strokes: for each stroke store points (x,y,t), pressure/tilt if available, and stroke id.
+- Page save/load, export as PNG and stroke-JSON.
+- Support Pencil-like pressure smoothing; efficient point resampling to reduce memory.
+
+2) Handwriting-sample onboarding (must)
+- On first run show “Handwriting training” flow: grid of boxes for A–Z, a–z, 0–9 and common math symbols (+ - × ÷ = < > ( ) [ ] / . , π Σ ∫ √ α β γ → fraction bar, superscript caret, subscript underscore).
+- Collect 2–3 variants per glyph when possible to improve recognition and synthesis.
+- Save per-glyph canonical stroke sequence normalized in height and baseline. Provide UI to re-record any glyph easily.
+
+3) Recognition pipeline
+- Primary: Google ML Kit Digital Ink Recognition integration (on-device) for stroke→text with per-word confidence. If the device lacks the model, show a small download prompt or fallback to TFLite stroke→text model (packaging instructions).
+- For math detection: quick heuristic classifier (regex-like tokens and presence of math symbols) and optional call to specialized math OCR (documented but not bundled).
+- Present recognized text inline and let user edit corrections before solving. Show per-word confidence heatmap.
+
+4) Complexity classifier & orchestration
+- Implement a lightweight classifier (heuristics: token length, presence of integrals/Σ/√/fractions, required symbolic solving, estimated compute) to decide:
+  - LOCAL: use small local quantized model for quick answers and short reasoning.
+  - REMOTE: use Groq API for long, heavy or symbolic tasks.
+- Device memory detection: at runtime detect available RAM and CPU architecture; pick smallest feasible model for the device. Default for 4GB devices: micro model (250M–700M quantized) or minimal 1B with aggressive quantization and mmap loading; larger models for >=6GB.
+
+5) Local LLM runtime
+- Provide two options/integration:
+  - llama.cpp (ggml) built via NDK with JNI wrappers, supporting quantized ggml models and mmap load.
+  - Alternative instruction to integrate mlc-llm Android artifact if easier.
+- Include a Kotlin coroutine API: llm.generate(prompt, maxTokens, streamCallback) with streaming support to UI.
+- Provide explicit conversion/quantization instructions (GPTQ/AWQ -> ggml) and recommended model sizes for 4GB/6GB devices. Show memory/latency estimates and a recommended default micro-model pack for 4GB.
+- Implement token-limiting prompt wrappers and short system prompts for speed.
+
+6) Groq integration (two accounts)
+- Implement a Groq client module with:
+  - Secure storage of two API keys in Android Keystore.
+  - Healthcheck on startup to measure latency & quota (simple test request).
+  - Selection logic: choose the key with best latency + quota; on 429/5xx/timeouts switch to other key automatically and retry once.
+  - Streaming and partial result support.
+  - Clear UI indicator of which account served the query and approximate usage cost.
+- Do NOT include real API keys in the repo; provide .env.example and README steps.
+
+7) Reply-in-user-handwriting rendering
+- Use the training glyphs to synthesize AI replies in the user’s handwriting:
+  - Break AI reply into characters.
+  - For each character, if user glyph exists, take canonical stroke template, scale, position, and apply spacing/kerning.
+  - Implement simple cursive-join heuristic for Latin scripts: small connecting strokes between letters where possible.
+  - For missing glyphs or complex content (diagrams, unsupported symbols), render typed text with a clear “computer text” badge.
+- Provide stroke-smoothing (Catmull-Rom or cubic spline) and resampling for clean rendering.
+- Export generated handwriting result as stroke-JSON and PNG for sharing.
+
+8) UX & speed-first features (must for low-latency perceived answers)
+- “Quick answer card” visible immediately: after recognition, present a short computed answer from a local rule-based solver (arithmetic, basic algebra) in <1s.
+- “Solve as you write” (opt-in toggle) that attempts continuous recognition and incremental solving; stream local-model partial answers so the user sees something quickly.
+- “One-tap escalate”: if quick/local answer unsatisfactory, user taps to send to Groq (explicit consent shown).
+- Confidence & correction: show low-confidence words highlighted and allow quick touch corrections, which immediately re-run the solver.
+- Cache recent queries + results; if an identical or very similar query is seen again, show cached result instantly while background-checking freshness.
+- Provide a “history” and “notebook” view with pages, favorites, and export.
+
+9) Design style & new ideas (visual and interaction)
+- Design language: clean modern notebook with tactile feel:
+  - Primary UI: a neutral paper background (#FFF8F0) with subtle ruled lines optional toggle.
+  - Accent color: teal #0AA6A6 for primary actions; secondary: warm gold #F2C94C for highlights.
+  - Typography: Inter for UI text and a lightweight handwriting-like fallback for typed-fallback (bundled).
+  - Compose animations: micro-interactions with easing, subtle ink ripple when AI writes back.
+- New ideas to improve speed & UX:
+  - Onboarding quick-check: after glyph capture run a tiny recognition test and show which glyphs need relearning; ask for 1–2 re-writes to optimize overall accuracy.
+  - “Smart snippet”: when long text detected, show a one-line summary card generated by local model for instant comprehension.
+  - Progressive offload: split heavy tasks into “understand” (local) and “solve” (remote), upload only compact structured representation (e.g., parsed math expression) to Groq rather than the entire image.
+  - Edge caching + cloud reuse: cache Groq responses encrypted; if user revokes cloud, keep local cached answers still available.
+  - Low-memory friendly mode: allow the user to select “Fast/Low-Mem Mode” which uses rule-based solvers + small local model; disables larger models and aggressive streaming.
+
+10) Performance & low-RAM strategies (crucial)
+- Runtime device memory check and dynamic model selection. For 4GB target:
+  - Default to a micro-LLM (250M–700M) quantized to 4-bit/2-bit where possible.
+  - Use mmap/streamed model loading to avoid huge contiguous allocations.
+  - Limit concurrency: single-threaded or small thread pool for inference.
+  - Use small context windows (e.g., 512–1024 tokens).
+  - Offload heavy compute to Groq when local memory/CPU insufficient.
+  - Provide “lite” mode with only on-device recognition + rule-based solvers for instant responses.
+- Provide profiling tips and sample scripts to measure memory & latency in-app.
+
+11) Dev & build deliverables required from Claude
+- Full Android Studio project skeleton with:
+  - package NAME: PACKAGE_NAME (replaceable).
+  - Modules: app/, native/ (jni), llm/, groq/, recognition/, synthesis/, ui/, storage/, tests/.
+  - Key Kotlin classes & Compose screens fully implemented (MainActivity, NotebookScreen, PageEditor, OnboardingSamples, RecognizedTextEditor, Settings, History).
+  - JNI C++ wrapper for llama.cpp with build.gradle/ndk cmake config (or clear option to use prebuilt mlc-llm).
+  - Groq client example using Ktor or OkHttp with retry/failover logic.
+  - ML Kit Digital Ink wrapper with example model download and fallback instructions.
+  - Handwriting glyph library: data model and JSON sample.
+  - Handwriting synthesis module producing SVG or stroke-JSON and rendering on Compose Canvas.
+  - README with step-by-step:
+    - How to build native libs (ndk/cmake).
+    - How to obtain and convert models (GPTQ/AWQ -> ggml) and recommended models for 4GB and 6GB devices.
+    - How to insert Groq API keys safely, and where to configure device thresholds.
+    - Play Store checklist and privacy policy template.
+  - Unit tests for stroke normalization, glyph mapping, classifier and Groq key rotation logic (with mocked HTTP).
+  - CI notes: optional GitHub Actions build matrix sample to build APKs for arm64 & armeabi-v7a and run unit tests.
+
+12) UX text & onboarding copy (include exact copy)
+- Provide UX copy for onboarding, consent, and low-memory warnings. Example:
+  - “We’ll ask you to write A–Z, a–z, 0–9 and common math symbols so the app learns your handwriting. It only stays on your device unless you choose cloud help.”
+  - “Local quick answer ready — tap to expand or ‘Escalate to Cloud’ for full solution (may send content to Groq).”
+  - Low-memory warning: “Your device has limited memory. For complex problems, we’ll ask permission to use cloud compute.”
+
+13) Output format & delivery expectations
+- Return: a Git repo (or zip) ready to open in Android Studio with working mocked local LLM pipeline if real model not available (stubbed responses), and with clear toggles to switch to real llama.cpp if user adds model files & builds native libs.
+- Do not embed any real API keys or proprietary models. Include placeholders and .env.example.
+- Provide a short test plan: steps to validate handwriting onboarding, recognition, local LLM fallback, Groq failover, and handwriting synthesis.
+
+14) Constraints/limitations to explicitly document in code & README
+- Realistic behavior on 4GB devices: explain that only small quantized models feasible, some heavy symbolic math may require cloud.
+- Explain legal/license implications for any suggested LLM model (link to model license and required attribution).
+- Mention third-party commercial math OCR like Mathpix/MyScript as optional paid alternatives with integration notes.
+
+Developer instructions for Claude (how to structure output)
+- Output repository structure and file contents exactly; include full Kotlin files for key modules (ui, recognition, llm wrapper, groq client, synthesis).
+- For any native C++ code, include CMakeLists and build instructions; if building llama.cpp is heavy, provide an alternative prebuilt artifact path and instructions to swap to full native build.
+- Provide sample small quantized model URL suggestions (public community micro-model) for testing only (do not link to copyrighted unlicensed weights) and show conversion commands (GPTQ -> ggml) as example shell commands.
+- Provide clear TODO markers where the developer must insert real models, API keys, or platform-specific SDK licenses.
+- Provide sample screenshots mockups and Compose preview components for design evaluation.
+
+Extra deliverable: concise “prompt-in-a-prompt” at the top of the repo README so downstream Claude or code-gen tools can regenerate components or expand modules.
+
+End of prompt.
+
+Notes for you before running Claude
+- Replace placeholders and decide whether you want llama.cpp (native) or mlc-llm (managed) integration.
+- If you want, I can: (A) adapt this prompt to include your preferred package name and minSdk and produce a starter repo scaffold here, or (B) run a smaller prompt that asks Claude to output only an initial working prototype (stroke capture, onboarding, recognition, mocked LLM). Which do you prefer?
